@@ -1,6 +1,7 @@
 'use strict'
 const express = require('express')
 const app = express()
+const Airtable = require('airtable')
 
 
 // Following this tutorial
@@ -8,44 +9,44 @@ const app = express()
 // See docs: https://airtable.com/appzeqG8nWiyOHXXY/api/docs#nodejs/table:organizations:list
 
 // TODO: actually send back data with lambda
+// set limits for lambda
 
 const base = new Airtable({apiKey: process.env.REACT_APP_AIRTABLE_API_KEY}).base(process.env.REACT_APP_AIRTABLE_BASE);
 
-base('Organizations').select({
-  maxRecords: 200,
-}).eachPage((records, fetchNextPage) => {
+app.get('/', (req, res) => {
   const nodes = [];
   const links = [];
-  records.forEach((record) => {
-    nodes.push({
-      id: record.id,
-      orgName: record.get('Name'),
+  base('Organizations').select({
+    maxRecords: 200,
+  }).eachPage((records, fetchNextPage) => {
+    records.forEach((record) => {
+      nodes.push({
+        id: record.id,
+        orgName: record.get('Name'),
+      })
+      const linksAsDest = record.get('Links as Dest') || [];
+      const linksAsSource = record.get('Links as Source') || [];
+      linksAsDest.forEach(destLink =>
+        links.push({
+          source: destLink,
+          target: record.id,
+        })
+      )
+      linksAsSource.forEach(sourceLink =>
+        links.push({
+          source: record.id,
+          target: sourceLink,
+        })
+      )
+    });
+    res.json({
+      fetchedNodes: nodes,
+      fetchedLinks: links,
     })
-    const linksAsDest = record.get('Links as Dest') || [];
-    const linksAsSource = record.get('Links as Source') || [];
-    linksAsDest.forEach(destLink =>
-      links.push({
-        source: destLink,
-        target: record.id,
-      })
-    )
-    linksAsSource.forEach(sourceLink =>
-      links.push({
-        source: record.id,
-        target: sourceLink,
-      })
-    )
+  }, (err) => {
+    console.error(err);
   });
-  this.setState({
-    fetchedNodes: nodes,
-    fetchedLinks: links,
-  })
-  // fetchNextPage();
-}, (err) => {
-  if (err) { console.error(err); return <div>Error :(</div>; }
-  });
+})
 
-
-app.get('/', (req, res) => res.send('Hello world!'))
 
 module.exports = app
