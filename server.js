@@ -8,9 +8,6 @@ const Airtable = require('airtable')
 // https://medium.freecodecamp.org/express-js-and-aws-lambda-a-serverless-love-story-7c77ba0eaa35
 // See docs: https://airtable.com/appzeqG8nWiyOHXXY/api/docs#nodejs/table:organizations:list
 
-// TODO: actually send back data with lambda
-// set limits for lambda
-
 const base = new Airtable({apiKey: process.env.REACT_APP_AIRTABLE_API_KEY}).base(process.env.REACT_APP_AIRTABLE_BASE);
 
 app.get('/', (req, res) => {
@@ -39,6 +36,9 @@ app.get('/', (req, res) => {
         })
       )
     });
+    // CHANGE THIS TO GITHUB PAGES ASAP
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
     res.json({
       fetchedNodes: nodes,
       fetchedLinks: links,
